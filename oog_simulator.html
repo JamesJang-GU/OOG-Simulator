@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OOG 시뮬레이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#000; --panel:#0b0b0b; --panel2:#101010; --line:#2b2b2b; --line2:#1c1c1c;
+  --amber:#ffa500; --hot:#ff4000; --txt:#e6e6e6; --dim:#8f8f8f;
+  --green:#3fb950; --red:#f85149;
+  --font:"Noto Sans","Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:var(--font);font-size:12px;font-variant-numeric:tabular-nums}
+button,input{font-family:var(--font)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:#333}
+::-webkit-scrollbar-track{background:#0a0a0a}
+
+/* ---------- top bar ---------- */
+.topbar{height:48px;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:2px solid var(--amber);background:linear-gradient(180deg,#171200,#000)}
+.logo{color:#000;background:var(--amber);font-weight:700;font-size:14px;padding:2px 8px;letter-spacing:.1em}
+.brand{color:var(--amber);font-size:12px;letter-spacing:.12em;white-space:nowrap}
+.topmeta{margin-left:auto;color:var(--dim);font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- layout ---------- */
+.grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:6px;padding:6px;height:calc(100vh - 48px)}
+.col{display:flex;flex-direction:column;gap:6px;min-height:0;min-width:0;overflow:auto}
+.panel{background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;min-width:0;flex-shrink:0}
+.panel>header{display:flex;align-items:center;gap:7px;padding:5px 7px;border-bottom:1px solid var(--line2);background:var(--panel2);min-height:27px}
+.code{color:#000;background:var(--amber);font-weight:700;font-size:10.5px;padding:1px 5px;letter-spacing:.08em;white-space:nowrap}
+.ttl{color:var(--amber);font-size:11.5px;letter-spacing:.08em;white-space:nowrap}
+.meta{margin-left:auto;color:var(--dim);font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.body{padding:10px;display:flex;flex-direction:column;gap:10px}
+
+/* ---------- form ---------- */
+.sect{color:var(--dim);font-size:10.5px;letter-spacing:.08em;border-bottom:1px solid var(--line2);padding-bottom:3px;margin-top:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;color:var(--dim)}
+.field input{background:#0d0d0d;border:1px solid var(--line);color:var(--txt);padding:6px;border-radius:2px;font-size:12.5px;width:100%}
+.field input:focus{outline:none;border-color:var(--amber)}
+.check{display:flex;align-items:center;gap:6px;font-size:11.5px}
+.hint{font-size:10.5px;color:var(--dim);line-height:1.5}
+.err{font-size:11.5px;color:var(--red);min-height:1em}
+.sim-btn{background:var(--amber);border:none;color:#000;padding:8px 16px;cursor:pointer;font-weight:700;font-size:12px}
+
+/* ---------- deviation (left) ---------- */
+.headline{font-size:13px;font-weight:500;padding:8px 10px;border-left:3px solid var(--amber);background:var(--panel2);line-height:1.45}
+.headline.ok{border-color:var(--green)}
+.headline.oog{border-color:var(--red)}
+.headline small{display:block;color:var(--dim);font-size:10.5px;font-weight:400;margin-top:3px}
+.devrows{display:flex;flex-direction:column;border:1px solid var(--line2)}
+.devrow{display:grid;grid-template-columns:1fr auto 58px;gap:8px;align-items:baseline;padding:6px 8px;border-bottom:1px solid var(--line2)}
+.devrow:last-child{border-bottom:none}
+.devrow .k{color:var(--dim);font-size:11px}
+.devrow .v{font-size:15px}
+.devrow .p{font-size:10.5px;color:var(--dim);text-align:right}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th,td{padding:4px 5px;border-bottom:1px solid var(--line2);text-align:right;white-space:nowrap}
+th{color:var(--dim);font-weight:500;font-size:10.5px}
+th:first-child,td:first-child{text-align:left}
+.up{color:var(--red)}
+.ok{color:var(--green)}
+.hotc{color:var(--hot)}
+.dimv{color:var(--dim)}
+
+/* ---------- recommendation + 3D ---------- */
+.recbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;border-bottom:1px solid var(--line2)}
+.rk{background:var(--amber);color:#000;font-weight:700;font-size:11px;padding:2px 7px;letter-spacing:.06em}
+.rk.bad{background:var(--red);color:#fff}
+.rec-type{font-size:20px;font-weight:700;color:var(--amber)}
+.rec-sub{color:var(--dim);font-size:11px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);padding:2px 7px;font-size:11px;white-space:nowrap}
+.viewing{margin-left:auto;color:var(--dim);font-size:11px}
+.viewing b{color:var(--txt)}
+.stage{position:relative;height:clamp(340px,52vh,640px);background:#0b0b0b;overflow:hidden}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.overlay{position:absolute;inset:0;pointer-events:none}
+.lab3d{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:11.5px;font-weight:700;padding:1px 6px;pointer-events:none}
+.lab3d.hot{background:var(--hot);color:#000}
+.lab3d.bad{background:var(--red);color:#fff}
+.lab3d.dim{color:#b8c0c8;font-weight:500;font-size:10.5px;text-shadow:0 0 3px #000}
+.stage-info{position:absolute;left:10px;top:8px;font-size:11px;color:var(--dim);pointer-events:none;line-height:1.5}
+.stage-info b{color:var(--txt);font-size:12.5px}
+.viewbtns{position:absolute;right:8px;top:8px;display:flex;gap:4px}
+.viewbtns button{background:#141414;border:1px solid var(--line);color:var(--txt);font-size:11px;padding:3px 8px;cursor:pointer}
+.viewbtns button:hover{border-color:var(--amber);color:var(--amber)}
+.legend3d{position:absolute;left:10px;bottom:8px;display:flex;gap:12px;flex-wrap:wrap;font-size:10.5px;color:var(--dim);pointer-events:none}
+.legend3d i{display:inline-block;width:12px;height:10px;margin-right:5px;vertical-align:-1px}
+.help3d{position:absolute;right:10px;bottom:8px;font-size:10.5px;color:#666;pointer-events:none}
+.stage:focus-visible{outline:1px solid var(--amber);outline-offset:-1px}
+.ctrlpad{position:absolute;right:10px;bottom:28px;display:flex;align-items:flex-end;gap:8px;user-select:none}
+.ctrlpad button{background:rgba(20,20,20,.88);border:1px solid var(--line);color:var(--txt);font-size:12px;cursor:pointer;padding:0;touch-action:none}
+.ctrlpad button:hover{border-color:var(--amber);color:var(--amber)}
+.ctrlpad button:active{background:#2a1f00}
+.dpad{display:grid;grid-template-columns:repeat(3,28px);grid-template-rows:repeat(3,28px);gap:2px}
+.dpad .u{grid-area:1/2}.dpad .l{grid-area:2/1}.dpad .c{grid-area:2/2}.dpad .r{grid-area:2/3}.dpad .d{grid-area:3/2}
+.zpad{display:flex;flex-direction:column;align-items:center;gap:2px}
+.zpad button{width:28px;height:28px;font-size:14px}
+.zoomv{font-size:10px;color:var(--dim);min-width:34px;text-align:center}
+.ctrlpad .spin{height:28px;padding:0 8px;font-size:11px}
+.ctrlpad .spin.on{background:var(--amber);color:#000;border-color:var(--amber)}
+.nogl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);text-align:center;padding:20px}
+
+/* ---------- container cards ---------- */
+.group-t{color:var(--dim);font-size:10.5px;letter-spacing:.08em;margin:2px 0 -4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+.card{border:1px solid var(--line);background:var(--panel2);padding:8px;cursor:pointer;display:flex;flex-direction:column;gap:5px;min-width:0;position:relative}
+.card:hover{border-color:#555}
+.card.sel{border-color:var(--amber);background:#141000}
+.card.rec::after{content:"추천";position:absolute;right:-1px;top:-1px;background:var(--amber);color:#000;font-size:10px;font-weight:700;padding:1px 6px}
+.card-h{display:flex;align-items:baseline;gap:6px}
+.card-h b{font-size:14px}
+.card-h span{color:var(--dim);font-size:10.5px}
+.icon{width:100%;height:64px;display:block;overflow:hidden}
+.i-wall{fill:rgba(167,176,186,.10);stroke:#8a939c;stroke-width:1;vector-effect:non-scaling-stroke}
+.i-deck{fill:rgba(167,176,186,.30);stroke:#8a939c;stroke-width:1;vector-effect:non-scaling-stroke}
+.i-env{fill:none;stroke:#5a5a5a;stroke-width:1;stroke-dasharray:3 2;vector-effect:non-scaling-stroke}
+.i-cargo{fill:var(--amber);stroke:#ffe0a8;stroke-width:.8;vector-effect:non-scaling-stroke}
+.i-cargo.s{fill:#d98900}
+.i-cargo.t{fill:#ffc04d}
+.spec{font-size:11px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spec span{color:var(--dim)}
+.fit{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--dim);min-height:18px}
+.fit .txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{display:inline-block;padding:1px 6px;font-size:10px;font-weight:700;color:#000;white-space:nowrap}
+.badge.b0{background:var(--green)}
+.badge.b1{background:var(--amber)}
+.badge.b2{background:var(--red);color:#fff}
+
+@media (max-width:860px){
+  .grid{grid-template-columns:minmax(0,1fr);height:auto}
+  .col{overflow:visible}
+  .topmeta{display:none}
+  .stage{height:380px}
+}
+</style>
+</head>
+<body>
+<header class="topbar"><span class="logo">OOG</span><span class="brand">시뮬레이터</span><span class="topmeta">단위 cm · Ton │ 장비 스펙은 선사별로 상이 — 기준 선사 스펙으로 확인 필요</span></header>
+<main class="grid">
+  <div class="col">
+    <section class="panel">
+      <header><span class="code">IN</span><span class="ttl">화물 치수 입력</span></header>
+      <form class="body" id="form" novalidate>
+        <div class="row2">
+          <div class="field"><label for="in-l">길이 L (cm)</label><input type="number" id="in-l" value="300" min="1" step="any"></div>
+          <div class="field"><label for="in-w">폭 W (cm)</label><input type="number" id="in-w" value="250" min="1" step="any"></div>
+          <div class="field"><label for="in-h">높이 H (cm)</label><input type="number" id="in-h" value="350" min="1" step="any"></div>
+          <div class="field"><label for="in-wt">중량 (Ton)</label><input type="number" id="in-wt" value="30" min="0.1" step="any"></div>
+        </div>
+        <div class="sect">적재 조건</div>
+        <div class="field"><label for="in-clr">적재 여유 (cm, 축당)</label><input type="number" id="in-clr" value="0" min="0" step="any"></div>
+        <label class="check"><input type="checkbox" id="in-rot" checked> 긴 변을 컨테이너 길이 방향으로 정렬 (L↔W)</label>
+        <div class="sect">초과 허용 한도 (선택)</div>
+        <div class="row2">
+          <div class="field"><label for="in-maxoh">최대 OH (cm)</label><input type="number" id="in-maxoh" min="0" step="any" placeholder="제한 없음"></div>
+          <div class="field"><label for="in-maxow">최대 OW (cm/측)</label><input type="number" id="in-maxow" min="0" step="any" placeholder="제한 없음"></div>
+        </div>
+        <div class="hint">화물은 컨테이너 중앙에 싣는 것을 기준으로 계산합니다. Open Top은 높이 초과(OH)만, Flat Rack은 폭(OW)·높이(OH) 초과를 허용하며, 길이 초과(OL)는 불가로 판정합니다.</div>
+        <div class="err" id="err" role="alert"></div>
+        <button class="sim-btn" type="submit">시뮬레이션</button>
+      </form>
+    </section>
+    <section class="panel">
+      <header><span class="code">DEV</span><span class="ttl">표준 규격 대비 편차</span></header>
+      <div class="body" id="dev"></div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="panel">
+      <header><span class="code">3D</span><span class="ttl">추천 컨테이너 · 적재 뷰</span><span class="meta">중앙 적재 기준</span></header>
+      <div class="recbar" id="recbar"></div>
+      <div class="stage" id="stage" tabindex="0" aria-label="3D 적재 뷰 — 방향키 회전, +/- 확대 축소, 0 초기화">
+        <div class="overlay" id="overlay"></div>
+        <div class="stage-info" id="stage-info"></div>
+        <div class="viewbtns">
+          <button type="button" data-view="iso">기본</button>
+          <button type="button" data-view="front">정면</button>
+          <button type="button" data-view="side">측면</button>
+          <button type="button" data-view="top">상부</button>
+        </div>
+        <div class="legend3d">
+          <span><i style="background:rgba(167,176,186,.35);border:1px solid #c9d1d9"></i>컨테이너</span>
+          <span><i style="background:var(--amber)"></i>화물</span>
+          <span><i style="background:var(--hot)"></i>돌출부</span>
+          <span><i style="border:1px dashed #8f8f8f"></i>게이지</span>
+        </div>
+        <div class="ctrlpad" id="ctrlpad">
+          <div class="dpad">
+            <button type="button" class="u" data-act="up" title="위에서 내려다보기 (↑)" aria-label="위로 회전">▲</button>
+            <button type="button" class="l" data-act="left" title="왼쪽으로 회전 (←)" aria-label="왼쪽으로 회전">◀</button>
+            <button type="button" class="c" data-act="reset" title="시점 초기화 (0)" aria-label="시점 초기화">⟲</button>
+            <button type="button" class="r" data-act="right" title="오른쪽으로 회전 (→)" aria-label="오른쪽으로 회전">▶</button>
+            <button type="button" class="d" data-act="down" title="아래에서 올려다보기 (↓)" aria-label="아래로 회전">▼</button>
+          </div>
+          <div class="zpad">
+            <button type="button" data-act="in" title="확대 (+)" aria-label="확대">＋</button>
+            <span class="zoomv" id="zoomv">100%</span>
+            <button type="button" data-act="out" title="축소 (−)" aria-label="축소">－</button>
+          </div>
+          <button type="button" class="spin" data-act="spin" id="spinbtn" title="자동 회전 켜기/끄기">자동 회전</button>
+        </div>
+        <div class="help3d">드래그 회전 · 우클릭/Shift+드래그 이동 · 휠/핀치 확대 · 방향키 · 더블클릭 초기화</div>
+      </div>
+    </section>
+    <section class="panel">
+      <header><span class="code">EQP</span><span class="ttl">컨테이너별 규격</span><span class="meta">카드를 클릭하면 3D 뷰에 표시 · 내부 치수 기준</span></header>
+      <div class="body" id="cards"></div>
+    </section>
+  </div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// 내부 치수(cm) / 최대 적재중량(t). 선사별로 상이하므로 기준 선사 스펙으로 확인 필요
+const STD=[
+  {type:'20GP',kind:'GP',name:"20' Dry",l:589.8,w:235.2,h:239.3,wt:28.2},
+  {type:'40GP',kind:'GP',name:"40' Dry",l:1203.2,w:235.2,h:239.3,wt:26.7},
+  {type:'40HC',kind:'GP',name:"40' High Cube",l:1203.2,w:235.2,h:269.8,wt:26.5}
+];
+const EQUIP=[
+  {type:'20OT',kind:'OT',name:"20' Open Top",l:590.2,w:235.2,h:234.8,wt:27},
+  {type:'40OT',kind:'OT',name:"40' Open Top",l:1203.6,w:235.2,h:234.8,wt:26},
+  {type:'40OQ',kind:'OT',name:"40' Open Top HC",l:1203.6,w:235.2,h:265.3,wt:26},
+  {type:'20FL',kind:'FR',name:"20' Flat Rack",l:561.2,w:243.8,h:220.0,wt:26},
+  {type:'40FL',kind:'FR',name:"40' Flat Rack",l:1168.4,w:243.8,h:195.0,wt:38},
+  {type:'40FQ',kind:'FR',name:"40' Flat Rack HC",l:1165.2,w:243.8,h:226.4,wt:44},
+  {type:'40SR',kind:'FR',name:"40' Super Rack",l:1161.5,w:243.8,h:345.0,wt:44}
+];
+const ALL=[...STD,...EQUIP];
+// 유형별로 게이지 초과가 허용되는 축 (GP는 초과 불가 → 초과 시 OOG)
+const KIND={GP:{name:'Dry',allow:[]},OT:{name:'Open Top',allow:['h']},FR:{name:'Flat Rack',allow:['w','h']}};
+const AXIS={l:'길이',w:'폭',h:'높이'};
+const STATUS=['가능 · 규격 내','가능 · OOG','불가'];
+
+const fmt=n=>(Math.round(n*10)/10).toLocaleString('ko-KR',{maximumFractionDigits:1});
+const pct=(over,cap)=>(over/cap*100).toFixed(1)+'%';
+const dims=c=>fmt(c.l)+'×'+fmt(c.w)+'×'+fmt(c.h);
+const $=id=>document.getElementById(id);
+const state={res:[],rec:null,selected:null};
+
+// 화물 1건을 컨테이너 1종에 대해 판정.
+// 정렬 옵션이 켜져 있으면 긴 변을 컨테이너 길이 방향으로 돌려 싣는다(실무 관행).
+// 반대로 돌려 OL을 OW로 바꾸는 적재는 고려하지 않는다.
+// over[k] > 0 : 게이지 초과량, < 0 : 여유. 화물은 중앙 적재 → 초과량은 양쪽에 반씩.
+function evaluate(cargo,c,allow,opt){
+  const rot=opt.rotate&&cargo.w>cargo.l;
+  const orients=[rot?{l:cargo.w,w:cargo.l,rot:true}:{l:cargo.l,w:cargo.w,rot:false}];
+  let best=null;
+  for(const o of orients){
+    const d={l:o.l,w:o.w,h:cargo.h},over={},issues=[];
+    let excess=0;
+    for(const k of ['l','w','h']){
+      over[k]=d[k]-c[k];
+      excess+=Math.max(0,over[k]);
+      if(d[k]+opt.clr>c[k]&&!allow.includes(k))
+        issues.push(AXIS[k]+' '+fmt(d[k]+opt.clr-c[k])+'cm 초과');
+    }
+    const oh=allow.includes('h')?Math.max(0,over.h):0;
+    const ow=allow.includes('w')?Math.max(0,over.w)/2:0;   // OW는 한쪽(측당) 기준
+    if(opt.maxOH!=null&&oh>opt.maxOH)issues.push('OH 한도 '+fmt(oh-opt.maxOH)+'cm 초과');
+    if(opt.maxOW!=null&&ow>opt.maxOW)issues.push('OW 한도 '+fmt(ow-opt.maxOW)+'cm/측 초과');
+    if(opt.checkWt&&cargo.wt>c.wt)issues.push('중량 '+fmt(cargo.wt-c.wt)+'T 초과');
+    const status=issues.length?2:(oh>0||ow>0?1:0);
+    const r={c,rot:o.rot,d,over,oh,ow,issues,status,excess};
+    if(!best||r.status<best.status||(r.status===best.status&&r.excess<best.excess))best=r;
+  }
+  return best;
+}
+
+// 추천 순위: 규격 내 → OOG 가능 → 불가 / 규격 내라면 일반(Dry) 우선 / 초과량 적은 순 / 작은 장비 순
+function rankCmp(a,b){
+  if(a.status===2&&b.status===2)   // 불가끼리는 위반 항목이 적고 초과량이 작은 순 (가장 근접한 장비)
+    return a.issues.length-b.issues.length||a.excess-b.excess||a.c.l-b.c.l;
+  return a.status-b.status
+    ||((a.status===0&&a.c.kind!=='GP')-(b.status===0&&b.c.kind!=='GP'))
+    ||(a.oh+a.ow*2)-(b.oh+b.ow*2)
+    ||a.excess-b.excess
+    ||a.c.l-b.c.l||a.c.wt-b.c.wt;
+}
+
+function readInputs(){
+  const num=id=>{const v=$(id).value.trim();return v===''?null:Number(v);};
+  const cargo={l:num('in-l'),w:num('in-w'),h:num('in-h'),wt:num('in-wt')};
+  for(const k of ['l','w','h','wt'])
+    if(cargo[k]==null||!isFinite(cargo[k])||cargo[k]<=0)return {error:'길이·폭·높이·중량은 0보다 큰 숫자여야 합니다.'};
+  const clr=num('in-clr')??0,maxOH=num('in-maxoh'),maxOW=num('in-maxow');
+  if(!isFinite(clr)||clr<0)return {error:'적재 여유는 0 이상이어야 합니다.'};
+  for(const v of [maxOH,maxOW])if(v!=null&&(!isFinite(v)||v<0))return {error:'초과 허용 한도는 0 이상이거나 비워두세요.'};
+  return {cargo,opt:{clr,maxOH,maxOW,rotate:$('in-rot').checked,checkWt:true}};
+}
+
+/* ---------- 좌측: 표준 규격 대비 편차 ---------- */
+function renderDev(cargo,opt){
+  // OOG 여부는 치수로만 판단 (중량은 OOG 기준이 아님)
+  const std=STD.map(c=>evaluate(cargo,c,[],{...opt,checkWt:false,maxOH:null,maxOW:null}));
+  const ref=std.reduce((a,b)=>b.status<a.status||(b.status===a.status&&b.excess<a.excess)?b:a);
+  const o=ref.over;
+  const exceeded=['h','w','l'].filter(k=>o[k]>0).map(k=>AXIS[k]+' +'+fmt(o[k])+'cm');
+  const row=(label,over,cap,sub)=>'<div class="devrow"><span class="k">'+label+'</span>'+
+    (over>0?'<span class="v up">+'+fmt(over)+' cm</span><span class="p">+'+pct(over,cap)+'</span>'
+           :'<span class="v ok">여유 '+fmt(-over)+'</span><span class="p">이내</span>')+'</div>'+
+    (over>0&&sub?'<div class="devrow"><span class="k" style="padding-left:10px">└ '+sub+'</span><span class="v hotc" style="font-size:12.5px">+'+fmt(over/2)+' cm</span><span class="p"></span></div>':'');
+  const cell=(over)=>'<td class="'+(over>0?'up':'dimv')+'">'+(over>0?'+':'−')+fmt(Math.abs(over))+'</td>';
+  $('dev').innerHTML=
+    (ref.status
+      ?'<div class="headline oog">OOG 화물<small>표준 컨테이너에 적재 불가 · 가장 근접한 '+ref.c.type+' 대비 '+exceeded.join(', ')+'</small></div>'
+      :'<div class="headline ok">규격 내 화물 (OOG 아님)<small>'+ref.c.type+' 게이지 이내'+
+        (cargo.wt>ref.c.wt?' · <span class="up">단, 중량이 '+ref.c.type+' 최대 적재중량을 '+fmt(cargo.wt-ref.c.wt)+'T 초과</span>':'')+'</small></div>')+
+    '<div class="devrows">'+
+      row('높이 초과 · OH',o.h,ref.c.h)+
+      row('폭 초과 · OW',o.w,ref.c.w,'측당 (중앙 적재)')+
+      row('길이 초과 · OL',o.l,ref.c.l,'전후 각 (중앙 적재)')+
+    '</div>'+
+    '<div class="hint">기준 게이지: '+ref.c.type+' '+ref.c.name+' ('+dims(ref.c)+' cm)'+(ref.rot?' · 90° 회전 적용':'')+'</div>'+
+    '<table><thead><tr><th>표준 (cm)</th><th>ΔL</th><th>ΔW</th><th>ΔH</th><th>판정</th></tr></thead><tbody>'+
+    std.map(r=>'<tr><td>'+r.c.type+'</td>'+cell(r.over.l)+cell(r.over.w)+cell(r.over.h)+
+      '<td>'+(r.status?'<span class="up">초과</span>':'<span class="ok">이내</span>')+'</td></tr>').join('')+
+    '</tbody></table>';
+}
+
+/* ---------- 우측 하단: 컨테이너 카드 (사선 투상 미니 도면, 모든 카드 동일 축척) ---------- */
+const ICON_K=0.41,ICON_M=0.285,ICON_L=1210,ICON_W=250,ICON_H=350;
+function icon(r){
+  const c=r.c,d=r.d;
+  const P=(x,y,z)=>(x+z*ICON_K).toFixed(1)+','+(-(y+z*ICON_M)).toFixed(1);
+  const faces=(x0,y0,z0,x1,y1,z1)=>({
+    back:[[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]],
+    left:[[x0,y0,z0],[x0,y0,z1],[x0,y1,z1],[x0,y1,z0]],
+    bottom:[[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]],
+    top:[[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]],
+    right:[[x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0]],
+    front:[[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0]]
+  });
+  const poly=(pts,cls)=>'<polygon class="'+cls+'" points="'+pts.map(p=>P(...p)).join(' ')+'"/>';
+  const f=faces(0,0,0,c.l,c.h,c.w);
+  // 화물: 컨테이너 중앙 적재
+  const cx=(c.l-d.l)/2,cz=(c.w-d.w)/2,g=faces(cx,0,cz,cx+d.l,d.h,cz+d.w);
+  const cargo=poly(g.right,'i-cargo s')+poly(g.top,'i-cargo t')+poly(g.front,'i-cargo');
+  let s;
+  if(c.kind==='FR')
+    s=poly(f.bottom,'i-deck')+poly(f.left,'i-wall')+cargo+poly(f.right,'i-wall')+poly(f.front,'i-env')+poly(f.top,'i-env');
+  else
+    s=poly(f.back,'i-wall')+poly(f.left,'i-wall')+poly(f.bottom,'i-wall')+cargo+poly(f.right,'i-wall')+poly(f.front,'i-wall')+
+      poly(f.top,c.kind==='GP'?'i-wall':'i-env');
+  const vw=ICON_L+ICON_W*ICON_K,vh=ICON_H+ICON_W*ICON_M;
+  return '<svg class="icon" viewBox="-8 '+(-vh-40)+' '+(vw+16)+' '+(vh+48)+'" preserveAspectRatio="xMinYMax meet" aria-hidden="true">'+s+'</svg>';
+}
+
+function fitLine(r,cargo){
+  let txt;
+  if(r.status===0)txt='규격 내 적재';
+  else if(r.status===1)txt=[r.oh>0?'OH +'+fmt(r.oh):'',r.ow>0?'OW +'+fmt(r.ow)+'/측':''].filter(Boolean).join(' · ')+' cm';
+  else txt=r.issues.join(' · ');
+  return '<div class="fit"><span class="badge b'+r.status+'">'+STATUS[r.status]+'</span><span class="txt" title="'+txt+'">'+txt+'</span></div>';
+}
+
+function renderCards(cargo){
+  const by=Object.fromEntries(state.res.map(r=>[r.c.type,r]));
+  const card=c=>{
+    const r=by[c.type];
+    const cls='card'+(state.rec&&state.rec.c.type===c.type?' rec':'')+(state.selected===c.type?' sel':'');
+    return '<div class="'+cls+'" data-type="'+c.type+'" tabindex="0" role="button" aria-label="'+c.type+' 3D 보기">'+
+      '<div class="card-h"><b>'+c.type+'</b><span>'+c.name+'</span></div>'+icon(r)+
+      '<div class="spec">L '+fmt(c.l)+' · W '+fmt(c.w)+' · H '+fmt(c.h)+' <span>cm</span></div>'+
+      '<div class="spec"><span>최대 적재</span> '+fmt(c.wt)+' T <span>· 중량 여유</span> <b class="'+(cargo.wt>c.wt?'up':'')+'" style="font-weight:500">'+fmt(c.wt-cargo.wt)+' T</b></div>'+
+      fitLine(r,cargo)+'</div>';
+  };
+  $('cards').innerHTML=
+    '<div class="group-t">표준 컨테이너 (Dry)</div><div class="cards">'+STD.map(card).join('')+'</div>'+
+    '<div class="group-t">OOG 장비 (Open Top · Flat Rack)</div><div class="cards">'+EQUIP.map(card).join('')+'</div>';
+}
+
+/* ---------- 우측 상단: 추천 ---------- */
+function renderRec(cargo){
+  const rec=state.rec,sel=state.res.find(r=>r.c.type===state.selected);
+  const chips=r=>'<div class="chips">'+
+    '<span class="chip">'+(r.rot?'90° 회전 적재':'정방향 적재')+'</span>'+
+    (r.oh>0?'<span class="chip hotc">OH +'+fmt(r.oh)+' cm</span>':'')+
+    (r.ow>0?'<span class="chip hotc">OW +'+fmt(r.ow)+' cm/측</span>':'')+
+    '<span class="chip '+(cargo.wt>r.c.wt?'up':'')+'">중량 여유 '+fmt(r.c.wt-cargo.wt)+' T</span></div>';
+  $('recbar').innerHTML=(rec
+    ?'<span class="rk">추천</span><span class="rec-type">'+rec.c.type+'</span>'+
+      '<span class="rec-sub">'+rec.c.name+' · 내부 '+dims(rec.c)+' cm<br>'+STATUS[rec.status]+'</span>'+chips(rec)
+    :'<span class="rk bad">추천 없음</span><span class="rec-sub">모든 컨테이너에서 적재 불가 — 카드에서 사유를 확인하세요</span>')+
+    (sel&&sel!==rec?'<span class="viewing">표시 중: <b>'+sel.c.type+'</b> · '+STATUS[sel.status]+'</span>':'');
+  $('stage-info').innerHTML='<b>'+sel.c.type+'</b> '+sel.c.name+'<br>화물 '+fmt(sel.d.l)+'×'+fmt(sel.d.w)+'×'+fmt(sel.d.h)+' cm · '+fmt(cargo.wt)+' T';
+}
+
+/* ---------- 3D 적재 뷰 (Three.js, 1 unit = 1 m) ---------- */
+const S=0.01;
+const VIEWS={iso:{theta:1.0,phi:1.12},front:{theta:0,phi:Math.PI/2-0.001},side:{theta:Math.PI/2,phi:Math.PI/2-0.001},top:{theta:Math.PI/2,phi:0.01}};
+let G=null;
+
+function init3D(){
+  if(!window.THREE){
+    $('stage').insertAdjacentHTML('afterbegin','<div class="nogl">3D 라이브러리(three.js)를 불러오지 못했습니다.<br>네트워크 연결을 확인하세요. 판정 결과와 규격 카드는 정상 동작합니다.</div>');
+    return null;
+  }
+  const T=THREE,host=$('stage');
+  let renderer;
+  try{renderer=new T.WebGLRenderer({antialias:true});}
+  catch(e){host.insertAdjacentHTML('afterbegin','<div class="nogl">이 브라우저에서 WebGL을 사용할 수 없어 3D 뷰를 표시할 수 없습니다.</div>');return null;}
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  renderer.setClearColor(0x0b0b0b);
+  host.prepend(renderer.domElement);
+  const scene=new T.Scene();
+  scene.add(new T.AmbientLight(0xffffff,0.6));
+  const sun=new T.DirectionalLight(0xffffff,0.7);sun.position.set(6,12,9);scene.add(sun);
+  const grid=new T.GridHelper(40,40,0x2a2a2a,0x171717);grid.position.y=-0.16;scene.add(grid);
+  const group=new T.Group();scene.add(group);
+  G={renderer,scene,group,camera:new T.PerspectiveCamera(32,1,0.1,800),target:new T.Vector3(),base:new T.Vector3(),
+     theta:VIEWS.iso.theta,phi:VIEWS.iso.phi,dist:20,fitDist:20,w:1,h:1,labels:[],overlay:$('overlay')};
+
+  bindControls(renderer.domElement,host);
+  new ResizeObserver(resize).observe(host);
+  resize();
+  return G;
+}
+
+/* ---------- 카메라 조작: 회전 · 이동 · 줌 ---------- */
+const PHI_MIN=0.01,PHI_MAX=Math.PI-0.01;          // 거의 바로 위 ~ 바닥 아래에서 올려다보기까지
+function rotate(dTheta,dPhi){
+  G.theta+=dTheta;
+  G.phi=Math.min(PHI_MAX,Math.max(PHI_MIN,G.phi+dPhi));
+  draw();
+}
+function zoomBy(f){
+  G.dist=Math.min(G.fitDist*5,Math.max(G.fitDist*0.08,G.dist*f));
+  draw();
+}
+// 화면 기준 평행 이동 (드래그한 만큼 장면이 따라오도록 픽셀 → 월드 환산)
+function pan(dx,dy){
+  const cam=G.camera,k=2*G.dist*Math.tan(cam.fov*Math.PI/360)/G.h;
+  const right=new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,0);
+  const up=new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld,1);
+  G.target.addScaledVector(right,-dx*k).addScaledVector(up,dy*k);
+  draw();
+}
+
+let spinRAF=0,holdRAF=0;
+function setSpin(on){
+  cancelAnimationFrame(spinRAF);spinRAF=0;
+  $('spinbtn').classList.toggle('on',on);
+  if(!on)return;
+  const tick=()=>{rotate(0.006,0);spinRAF=requestAnimationFrame(tick);};
+  spinRAF=requestAnimationFrame(tick);
+}
+function hold(fn){                                // 버튼을 누르고 있는 동안 계속 움직임
+  stopHold();
+  const tick=()=>{fn();holdRAF=requestAnimationFrame(tick);};
+  tick();
+}
+function stopHold(){cancelAnimationFrame(holdRAF);holdRAF=0;}
+
+// ▲ 위에서 내려다보기 / ▼ 아래에서 올려다보기 / ◀▶ 좌우 회전 / ＋－ 줌
+const STEP=0.035;
+const ACT={
+  up:()=>rotate(0,-STEP),down:()=>rotate(0,STEP),
+  left:()=>rotate(-STEP,0),right:()=>rotate(STEP,0),
+  in:()=>zoomBy(1/1.035),out:()=>zoomBy(1.035)
+};
+
+function bindControls(cv,host){
+  const pts=new Map();let mode=null,pinch=0;
+  const pinchDist=()=>{const [a,b]=[...pts.values()];return Math.hypot(a.x-b.x,a.y-b.y)||1;};
+  cv.addEventListener('contextmenu',e=>e.preventDefault());
+  cv.addEventListener('pointerdown',e=>{
+    cv.setPointerCapture(e.pointerId);
+    pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    setSpin(false);host.focus({preventScroll:true});
+    if(pts.size===2){mode='pinch';pinch=pinchDist();}
+    else mode=(e.button===2||e.button===1||e.shiftKey)?'pan':'rotate';
+  });
+  cv.addEventListener('pointermove',e=>{
+    const p=pts.get(e.pointerId);if(!p)return;
+    const dx=e.clientX-p.x,dy=e.clientY-p.y;
+    p.x=e.clientX;p.y=e.clientY;
+    if(mode==='pinch'&&pts.size===2){const d=pinchDist();zoomBy(pinch/d);pinch=d;}
+    else if(mode==='pan')pan(dx,dy);
+    else if(mode==='rotate')rotate(dx*0.008,-dy*0.008);
+  });
+  const up=e=>{pts.delete(e.pointerId);mode=pts.size===1?'rotate':pts.size?mode:null;};
+  cv.addEventListener('pointerup',up);
+  cv.addEventListener('pointercancel',up);
+  cv.addEventListener('wheel',e=>{e.preventDefault();setSpin(false);zoomBy(Math.exp(Math.max(-60,Math.min(60,e.deltaY))*0.004));},{passive:false});
+  cv.addEventListener('dblclick',()=>setView('iso'));
+
+  // 키보드: 방향키 회전, +/- 줌, 0 초기화
+  host.addEventListener('keydown',e=>{
+    const map={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right','+':'in','=':'in','-':'out','_':'out'};
+    if(e.target.closest('button'))return;
+    if(map[e.key]){e.preventDefault();setSpin(false);for(let i=0;i<2;i++)ACT[map[e.key]]();}
+    else if(e.key==='0'||e.key==='Home'){e.preventDefault();setView('iso');}
+  });
+
+  // 화면 조작 패드
+  const pad=$('ctrlpad');
+  pad.addEventListener('pointerdown',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    e.preventDefault();
+    const a=b.dataset.act;
+    if(ACT[a]){setSpin(false);hold(ACT[a]);}
+    else if(a==='reset'){setSpin(false);setView('iso');}
+    else if(a==='spin')setSpin(!spinRAF);
+  });
+  pad.addEventListener('click',e=>{          // 키보드(Enter/Space)로 누른 경우: 한 단계씩
+    const b=e.target.closest('button');if(!b||e.detail!==0)return;
+    const a=b.dataset.act;
+    if(ACT[a])for(let i=0;i<4;i++)ACT[a]();
+    else if(a==='reset')setView('iso');
+    else if(a==='spin')setSpin(!spinRAF);
+  });
+  window.addEventListener('pointerup',stopHold);
+  window.addEventListener('pointercancel',stopHold);
+  window.addEventListener('blur',stopHold);
+  pad.addEventListener('pointerleave',stopHold);
+}
+
+function resize(){
+  if(!G)return;
+  const host=$('stage');G.w=host.clientWidth;G.h=host.clientHeight;
+  G.renderer.setSize(G.w,G.h);
+  G.camera.aspect=G.w/G.h;G.camera.updateProjectionMatrix();
+  draw();
+}
+
+function setView(name){
+  if(!G)return;
+  G.theta=VIEWS[name].theta;G.phi=VIEWS[name].phi;G.dist=G.fitDist;
+  G.target.copy(G.base);                         // 이동(pan)한 중심도 원위치
+  draw();
+}
+
+function clearGroup(){
+  G.group.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose();});
+  G.group.clear();
+  G.labels.forEach(l=>l.el.remove());G.labels=[];
+}
+
+function build(r){
+  const T=THREE,g=G.group,c=r.c,d=r.d,k=c.kind;
+  clearGroup();
+  const L=c.l*S,W=c.w*S,H=c.h*S,l=d.l*S,w=d.w*S,h=d.h*S,hp=Math.PI/2;
+
+  // 컨테이너: 투명한 회색 면 + 밝은 회색 테두리
+  const face=(fw,fh,pos,rot,op)=>{
+    const geo=new T.PlaneGeometry(fw,fh);
+    const m=new T.Mesh(geo,new T.MeshBasicMaterial({color:0xa7b0ba,transparent:true,opacity:op,side:T.DoubleSide,depthWrite:false}));
+    m.position.set(...pos);m.rotation.set(...rot);m.renderOrder=2;g.add(m);
+    const e=new T.LineSegments(new T.EdgesGeometry(geo),new T.LineBasicMaterial({color:0xc9d1d9,transparent:true,opacity:.7}));
+    e.position.copy(m.position);e.rotation.copy(m.rotation);g.add(e);
+  };
+  const base=new T.Mesh(new T.BoxGeometry(L,0.15,W),new T.MeshBasicMaterial({color:0x6e767e,transparent:true,opacity:k==='FR'?.55:.3,depthWrite:false}));
+  base.position.y=-0.075;base.renderOrder=1;g.add(base);
+  face(L,W,[0,0,0],[-hp,0,0],k==='FR'?.28:.14);                         // 바닥 / 데크
+  if(k!=='FR'){face(L,H,[0,H/2,W/2],[0,0,0],.12);face(L,H,[0,H/2,-W/2],[0,0,0],.12);}  // 측벽 (FR 없음)
+  face(W,H,[L/2,H/2,0],[0,hp,0],.16);face(W,H,[-L/2,H/2,0],[0,hp,0],.16); // 단벽
+  if(k==='GP')face(L,W,[0,H,0],[-hp,0,0],.10);                           // 지붕 (GP만)
+  // 게이지 외곽(점선): 이 선을 넘는 부분이 OOG
+  const env=new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(L,H,W)),
+    new T.LineDashedMaterial({color:0x8f8f8f,dashSize:.18,gapSize:.12,transparent:true,opacity:.65}));
+  env.position.y=H/2;env.computeLineDistances();g.add(env);
+
+  // 화물: 중앙 적재. 게이지 안쪽은 주황, 바깥으로 튀어나온 부분은 진한 주황
+  const inMat=new T.MeshLambertMaterial({color:0xffa500});
+  const outMat=new T.MeshLambertMaterial({color:0xff4000,emissive:0x7a1800});
+  const box=(sx,sy,sz,x,y,z,mat)=>{
+    if(sx<1e-6||sy<1e-6||sz<1e-6)return;
+    const m=new T.Mesh(new T.BoxGeometry(sx,sy,sz),mat);m.position.set(x,y,z);g.add(m);
+    const e=new T.LineSegments(new T.EdgesGeometry(m.geometry),new T.LineBasicMaterial({color:mat===outMat?0xffd2b0:0xffe0a8,transparent:true,opacity:.8}));
+    e.position.copy(m.position);g.add(e);
+  };
+  const li=Math.min(l,L),wi=Math.min(w,W),hi=Math.min(h,H);
+  box(li,hi,wi,0,hi/2,0,inMat);
+  if(h>H)box(l,h-H,w,0,H+(h-H)/2,0,outMat);                               // 상부 돌출 (OH)
+  if(l>L){const t=(l-L)/2;box(t,hi,w,L/2+t/2,hi/2,0,outMat);box(t,hi,w,-L/2-t/2,hi/2,0,outMat);}   // 전후 돌출 (OL)
+  if(w>W){const t=(w-W)/2;box(li,hi,t,0,hi/2,W/2+t/2,outMat);box(li,hi,t,0,hi/2,-W/2-t/2,outMat);} // 측면 돌출 (OW)
+
+  // 라벨
+  const lab=(text,p,cls)=>{const el=document.createElement('div');el.className='lab3d '+cls;el.textContent=text;G.overlay.appendChild(el);G.labels.push({el,p:new T.Vector3(...p)});};
+  const ok=a=>KIND[k].allow.includes(a);
+  if(r.over.h>0)lab('OH +'+fmt(r.over.h)+' cm'+(ok('h')?'':' · 불가'),[0,h+0.35,0],ok('h')?'hot':'bad');
+  if(r.over.w>0)lab('OW +'+fmt(r.over.w/2)+' cm/측'+(ok('w')?'':' · 불가'),[0,hi*0.5,w/2+0.25],ok('w')?'hot':'bad');
+  if(r.over.l>0)lab('OL +'+fmt(r.over.l/2)+' cm/측 · 불가',[l/2+0.3,hi*0.5,0],'bad');
+  lab('L '+fmt(c.l),[0,-0.16,W/2+0.45],'dim');
+  lab('W '+fmt(c.w),[L/2+0.5,-0.16,0],'dim');
+  lab('H '+fmt(c.h),[-L/2,H/2,W/2+0.3],'dim');
+
+  // 카메라 거리: 컨테이너·화물 전체가 들어오도록
+  const sx=Math.max(L,l),sy=Math.max(H,h),sz=Math.max(W,w);
+  G.target.set(0,sy*0.4,0);
+  const tan=Math.tan(G.camera.fov*Math.PI/360),aspect=G.w/G.h||1.6;
+  G.fitDist=Math.max(Math.hypot(sx,sz)*1.0/(tan*aspect),Math.hypot(sy,sz)*1.15/tan,4);
+  G.dist=G.fitDist;
+  G.base=G.target.clone();
+}
+
+function draw(){
+  if(!G)return;
+  const cam=G.camera,t=G.target,sp=Math.sin(G.phi);
+  cam.position.set(t.x+G.dist*sp*Math.cos(G.theta),t.y+G.dist*Math.cos(G.phi),t.z+G.dist*sp*Math.sin(G.theta));
+  cam.lookAt(t);cam.updateMatrixWorld();
+  G.renderer.render(G.scene,cam);
+  for(const lb of G.labels){
+    const v=lb.p.clone().project(cam);
+    lb.el.style.display=v.z<1?'':'none';
+    lb.el.style.left=((v.x+1)/2*G.w)+'px';
+    lb.el.style.top=((1-v.y)/2*G.h)+'px';
+  }
+  $('zoomv').textContent=Math.round(G.fitDist/G.dist*100)+'%';
+}
+
+function show3D(){
+  if(!G&&!init3D())return;
+  build(state.res.find(r=>r.c.type===state.selected));
+  draw();
+}
+
+/* ---------- 실행 ---------- */
+let last=null;
+function run(){
+  const inp=readInputs();
+  $('err').textContent=inp.error||'';
+  if(inp.error)return;
+  const {cargo,opt}=inp;
+  state.res=ALL.map(c=>evaluate(cargo,c,KIND[c.kind].allow,opt));
+  const ranked=[...state.res].sort(rankCmp);
+  state.rec=ranked.find(r=>r.status<2)||null;
+  state.selected=(state.rec||ranked[0]).c.type;   // 입력이 바뀌면 추천 컨테이너로 돌아감
+  last=cargo;
+  renderDev(cargo,opt);renderCards(cargo);renderRec(cargo);show3D();
+}
+function select(type){
+  if(!last||!type)return;
+  state.selected=type;
+  document.querySelectorAll('.card').forEach(el=>el.classList.toggle('sel',el.dataset.type===type));
+  renderRec(last);show3D();
+}
+$('form').addEventListener('submit',e=>{e.preventDefault();run();});
+$('form').addEventListener('input',run);
+$('cards').addEventListener('click',e=>{const el=e.target.closest('.card');if(el)select(el.dataset.type);});
+$('cards').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const el=e.target.closest('.card');if(el){e.preventDefault();select(el.dataset.type);}}});
+document.querySelector('.viewbtns').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setView(b.dataset.view);});
+run();
+</script>
+</body>
+</html>
