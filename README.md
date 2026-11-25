@@ -4,7 +4,9 @@ OOG(Out of Gauge) 화물 적재 시뮬레이터. 화물 치수와 중량을 입�
 
 ## 사용법
 
-`oog_simulator.html`을 브라우저로 열면 됩니다. 별도 설치는 필요 없습니다 (3D 표시에 Three.js CDN 사용, 인터넷 연결 필요).
+웹에서 바로 사용: https://jamesjang-gu.github.io/OOG-Simulator/
+
+또는 `oog_simulator.html`을 브라우저로 열면 됩니다. 별도 설치는 필요 없습니다 (3D 표시에 Three.js CDN 사용, 인터넷 연결 필요).
 
 ## 기능
 
