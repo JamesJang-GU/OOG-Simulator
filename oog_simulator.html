@@ -108,6 +108,47 @@ th:first-child,td:first-child{text-align:left}
 .ctrlpad .spin{height:28px;padding:0 8px;font-size:11px}
 .ctrlpad .spin.on{background:var(--amber);color:#000;border-color:var(--amber)}
 .nogl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);text-align:center;padding:20px}
+.viewbtns button.on{border-color:var(--red);color:var(--red)}
+.lab3d.ds{color:var(--red);font-size:10px;font-weight:700;text-shadow:0 0 3px #000,0 0 2px #000}
+
+/* ---------- dead space ---------- */
+.dsgrid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:14px;align-items:start}
+.dsleft{display:flex;flex-direction:column;gap:8px;min-width:0}
+.dssum{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:8px 10px;border-left:3px solid var(--red);background:var(--panel2)}
+.dssum.zero{border-color:var(--green)}
+.dssum .k{color:var(--dim);font-size:11px}
+.dssum .big{font-size:22px;font-weight:700;color:var(--red)}
+.dssum.zero .big{color:var(--green)}
+.dssum .s{color:var(--dim);font-size:11px}
+.dssum .s b{color:var(--txt);font-weight:500}
+.dstiles{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);align-items:stretch;gap:6px}
+.tile{display:flex;flex-direction:column;gap:2px;padding:7px 9px;background:var(--panel2);border-top:3px solid var(--line);min-width:0}
+.tile .k{color:var(--dim);font-size:10.5px;white-space:nowrap}
+.tile .big{font-size:20px;font-weight:700;white-space:nowrap}
+.tile .s{color:var(--dim);font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile.occ{border-color:var(--amber)}.tile.occ .big{color:var(--amber)}
+.tile.dead{border-color:var(--red)}.tile.dead .big{color:var(--red)}
+.tile.dead.zero{border-color:var(--green)}.tile.dead.zero .big{color:var(--green)}
+.tile.tot{border-color:#c9d1d9;background:#161616}.tile.tot .big{color:#fff}
+.dstiles .op{align-self:center;color:var(--dim);font-size:16px;font-weight:700}
+.dstab td.n{font-size:13.5px;font-weight:700}
+.dstab tfoot td{border-bottom:none;font-weight:700;color:var(--txt)}
+.dstab tfoot tr:first-child td{border-top:1px solid var(--line)}
+.dstab tfoot tr.sub td{font-weight:500}
+.dstab tfoot tr.sum td{border-top:1px solid #555;font-size:12px}
+.dstab tfoot tr.sum td.n{font-size:15px;color:#fff}
+.secs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:8px;min-width:0}
+.sec{margin:0;min-width:0}
+.sec figcaption{font-size:10.5px;color:var(--dim);margin-bottom:3px}
+.sec svg{width:100%;height:170px;display:block;background:#0d0d0d;border:1px solid var(--line2)}
+.s-lost{stroke:var(--red);stroke-width:1;stroke-dasharray:4 3;vector-effect:non-scaling-stroke}
+.s-own{fill:rgba(255,165,0,.06);stroke:var(--amber);stroke-width:1.5;stroke-dasharray:5 3;vector-effect:non-scaling-stroke}
+.s-cont{fill:rgba(167,176,186,.16);stroke:#c9d1d9;stroke-width:1;vector-effect:non-scaling-stroke}
+.s-cargo{fill:rgba(255,165,0,.82);stroke:#ffe0a8;stroke-width:1;vector-effect:non-scaling-stroke}
+.s-gnd{stroke:#444;stroke-width:1;vector-effect:non-scaling-stroke}
+.s-txt{fill:var(--red);font-weight:700;font-family:var(--font)}
+.dslegend{display:flex;gap:12px;flex-wrap:wrap;font-size:10.5px;color:var(--dim)}
+.dslegend i{display:inline-block;width:12px;height:10px;margin-right:5px;vertical-align:-1px}
 
 /* ---------- container cards ---------- */
 .group-t{color:var(--dim);font-size:10.5px;letter-spacing:.08em;margin:2px 0 -4px}
@@ -140,6 +181,14 @@ th:first-child,td:first-child{text-align:left}
   .col{overflow:visible}
   .topmeta{display:none}
   .stage{height:380px}
+  .help3d{display:none}
+  .ctrlpad{bottom:30px}
+  .dsgrid{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:520px){
+  .secs{grid-template-columns:minmax(0,1fr)}
+  .dstiles{grid-template-columns:minmax(0,1fr)}
+  .dstiles .op{display:none}
 }
 </style>
 </head>
@@ -164,7 +213,7 @@ th:first-child,td:first-child{text-align:left}
           <div class="field"><label for="in-maxoh">최대 OH (cm)</label><input type="number" id="in-maxoh" min="0" step="any" placeholder="제한 없음"></div>
           <div class="field"><label for="in-maxow">최대 OW (cm/측)</label><input type="number" id="in-maxow" min="0" step="any" placeholder="제한 없음"></div>
         </div>
-        <div class="hint">화물은 컨테이너 중앙에 싣는 것을 기준으로 계산합니다. Open Top은 높이 초과(OH)만, Flat Rack은 폭(OW)·높이(OH) 초과를 허용하며, 길이 초과(OL)는 불가로 판정합니다.</div>
+        <div class="hint">화물은 컨테이너 중앙에 싣는 것을 기준으로 계산합니다. Open Top은 높이 초과(OH)만, Flat Rack은 폭(OW)·높이(OH) 초과를 허용하며, 길이 초과(OL)는 불가로 판정합니다. 추천은 Dead Space를 포함한 총 점유 TEU가 적은 장비를 우선합니다.</div>
         <div class="err" id="err" role="alert"></div>
         <button class="sim-btn" type="submit">시뮬레이션</button>
       </form>
@@ -187,12 +236,14 @@ th:first-child,td:first-child{text-align:left}
           <button type="button" data-view="front">정면</button>
           <button type="button" data-view="side">측면</button>
           <button type="button" data-view="top">상부</button>
+          <button type="button" id="dsbtn" class="on" aria-pressed="true" title="Dead Space(손실 슬롯) 표시 켜기/끄기">Dead Space</button>
         </div>
         <div class="legend3d">
           <span><i style="background:rgba(167,176,186,.35);border:1px solid #c9d1d9"></i>컨테이너</span>
           <span><i style="background:var(--amber)"></i>화물</span>
           <span><i style="background:var(--hot)"></i>돌출부</span>
           <span><i style="border:1px dashed #8f8f8f"></i>게이지</span>
+          <span><i style="background:rgba(248,81,73,.15);border:1px dashed var(--red)"></i>Dead Space</span>
         </div>
         <div class="ctrlpad" id="ctrlpad">
           <div class="dpad">
@@ -211,6 +262,10 @@ th:first-child,td:first-child{text-align:left}
         </div>
         <div class="help3d">드래그 회전 · 우클릭/Shift+드래그 이동 · 휠/핀치 확대 · 방향키 · 더블클릭 초기화</div>
       </div>
+    </section>
+    <section class="panel">
+      <header><span class="code">DS</span><span class="ttl">Dead Space · 선박 손실 슬롯</span><span class="meta" id="ds-meta"></span></header>
+      <div class="body" id="ds"></div>
     </section>
     <section class="panel">
       <header><span class="code">EQP</span><span class="ttl">컨테이너별 규격</span><span class="meta">카드를 클릭하면 3D 뷰에 표시 · 내부 치수 기준</span></header>
@@ -245,7 +300,28 @@ const fmt=n=>(Math.round(n*10)/10).toLocaleString('ko-KR',{maximumFractionDigits
 const pct=(over,cap)=>(over/cap*100).toFixed(1)+'%';
 const dims=c=>fmt(c.l)+'×'+fmt(c.w)+'×'+fmt(c.h);
 const $=id=>document.getElementById(id);
-const state={res:[],rec:null,selected:null};
+const state={res:[],rec:null,selected:null,showDS:true};
+
+// ---------- Dead Space (선박 손실 슬롯) ----------
+// 선박 셀 슬롯: 폭 8'(243.8) · 높이 8'6"(259.1) · 길이 20'(609.6) / 40'(1219.2).
+// 화물이 장비 외곽을 넘어 인접 슬롯에 닿으면 그 슬롯은 사용할 수 없다고 본다 (허용오차 없음).
+// 화물은 직육면체이므로 OH와 OW가 함께 있으면 위 대각선(모서리) 슬롯도 막힌다.
+const SLOT={w:243.8,h:259.1};
+const is20=c=>c.type.startsWith('20');
+const extL=c=>is20(c)?605.8:1219.2;             // 장비 외부 길이
+const slotL=c=>is20(c)?609.6:1219.2;            // 길이 방향 슬롯 피치
+function deadSpace(r){
+  const c=r.c,d=r.d;
+  const p={l:Math.max(0,(d.l-extL(c))/2),        // 전후 각 돌출
+           w:Math.max(0,(d.w-SLOT.w)/2),          // 좌우 각 돌출
+           h:Math.max(0,d.h-c.h)};                // 상부 돌출 (OH)
+  const u={l:slotL(c),w:SLOT.w,h:SLOT.h};
+  const n={};for(const k of ['l','w','h'])n[k]=p[k]>1e-6?Math.ceil(p[k]/u[k]-1e-9):0;
+  const total=(1+2*n.l)*(1+2*n.w)*(1+n.h);
+  const ax={l:2*n.l,w:2*n.w,h:n.h};
+  const occ=1,dead=total-occ,teu=is20(c)?1:2;   // 실제 점유 = 장비 자신의 슬롯 1개
+  return {p,u,n,ax,corner:dead-ax.l-ax.w-ax.h,occ,occTeu:occ*teu,dead,deadTeu:dead*teu,total,totalTeu:total*teu,teu};
+}
 
 // 화물 1건을 컨테이너 1종에 대해 판정.
 // 정렬 옵션이 켜져 있으면 긴 변을 컨테이너 길이 방향으로 돌려 싣는다(실무 관행).
@@ -276,12 +352,14 @@ function evaluate(cargo,c,allow,opt){
   return best;
 }
 
-// 추천 순위: 규격 내 → OOG 가능 → 불가 / 규격 내라면 일반(Dry) 우선 / 초과량 적은 순 / 작은 장비 순
+// 추천 순위: 규격 내 → OOG 가능 → 불가 / 규격 내라면 일반(Dry) 우선 /
+// Dead Space 포함 총 점유 TEU 적은 순 / 초과량 적은 순 / 작은 장비 순
 function rankCmp(a,b){
   if(a.status===2&&b.status===2)   // 불가끼리는 위반 항목이 적고 초과량이 작은 순 (가장 근접한 장비)
     return a.issues.length-b.issues.length||a.excess-b.excess||a.c.l-b.c.l;
   return a.status-b.status
     ||((a.status===0&&a.c.kind!=='GP')-(b.status===0&&b.c.kind!=='GP'))
+    ||a.ds.totalTeu-b.ds.totalTeu
     ||(a.oh+a.ow*2)-(b.oh+b.ow*2)
     ||a.excess-b.excess
     ||a.c.l-b.c.l||a.c.wt-b.c.wt;
@@ -372,6 +450,9 @@ function renderCards(cargo){
       '<div class="card-h"><b>'+c.type+'</b><span>'+c.name+'</span></div>'+icon(r)+
       '<div class="spec">L '+fmt(c.l)+' · W '+fmt(c.w)+' · H '+fmt(c.h)+' <span>cm</span></div>'+
       '<div class="spec"><span>최대 적재</span> '+fmt(c.wt)+' T <span>· 중량 여유</span> <b class="'+(cargo.wt>c.wt?'up':'')+'" style="font-weight:500">'+fmt(c.wt-cargo.wt)+' T</b></div>'+
+      '<div class="spec">'+(r.status<2
+        ?'<span>점유</span> '+r.ds.occ+' <span>+ DS</span> <b class="'+(r.ds.dead?'up':'ok')+'" style="font-weight:500">'+r.ds.dead+'</b> <span>= 총</span> <b>'+r.ds.total+'</b> <span>슬롯 ('+r.ds.totalTeu+' TEU)</span>'
+        :'<span>Space — (적재 불가)</span>')+'</div>'+
       fitLine(r,cargo)+'</div>';
   };
   $('cards').innerHTML=
@@ -386,6 +467,9 @@ function renderRec(cargo){
     '<span class="chip">'+(r.rot?'90° 회전 적재':'정방향 적재')+'</span>'+
     (r.oh>0?'<span class="chip hotc">OH +'+fmt(r.oh)+' cm</span>':'')+
     (r.ow>0?'<span class="chip hotc">OW +'+fmt(r.ow)+' cm/측</span>':'')+
+    '<span class="chip" style="color:var(--amber)">점유 '+r.ds.occ+' 슬롯 · '+r.ds.occTeu+' TEU</span>'+
+    '<span class="chip '+(r.ds.dead?'up':'ok')+'">Dead Space '+r.ds.dead+' 슬롯 · '+r.ds.deadTeu+' TEU</span>'+
+    '<span class="chip" style="border-color:#888;font-weight:700">총 '+r.ds.total+' 슬롯 · '+r.ds.totalTeu+' TEU</span>'+
     '<span class="chip '+(cargo.wt>r.c.wt?'up':'')+'">중량 여유 '+fmt(r.c.wt-cargo.wt)+' T</span></div>';
   $('recbar').innerHTML=(rec
     ?'<span class="rk">추천</span><span class="rec-type">'+rec.c.type+'</span>'+
@@ -393,6 +477,68 @@ function renderRec(cargo){
     :'<span class="rk bad">추천 없음</span><span class="rec-sub">모든 컨테이너에서 적재 불가 — 카드에서 사유를 확인하세요</span>')+
     (sel&&sel!==rec?'<span class="viewing">표시 중: <b>'+sel.c.type+'</b> · '+STATUS[sel.status]+'</span>':'');
   $('stage-info').innerHTML='<b>'+sel.c.type+'</b> '+sel.c.name+'<br>화물 '+fmt(sel.d.l)+'×'+fmt(sel.d.w)+'×'+fmt(sel.d.h)+' cm · '+fmt(cargo.wt)+' T';
+}
+
+/* ---------- Dead Space 패널: 축별 손실 슬롯 + 슬롯 단면도 ---------- */
+// ax='w' → 정면(폭×높이), ax='l' → 측면(길이×높이). 단위 cm, SVG y축은 위가 음수
+function section(r,ax){
+  const c=r.c,d=r.d,ds=r.ds,n=ds.n[ax],u=ds.u[ax],nh=ds.n.h,TH=SLOT.h;
+  const cd=ax==='w'?c.w:c.l,gd=ax==='w'?d.w:d.l;
+  const X1=Math.max((n+.5)*u,gd/2,cd/2),Y1=Math.max(c.h+nh*TH,d.h);
+  const pad=Math.max(X1*2,Y1)*0.05,vbW=X1*2+pad*2,vbH=Y1+pad*2;
+  const R=(x0,y0,x1,y1,cls,extra)=>'<rect x="'+x0.toFixed(1)+'" y="'+(-y1).toFixed(1)+'" width="'+(x1-x0).toFixed(1)+'" height="'+(y1-y0).toFixed(1)+'" class="'+cls+'"'+(extra||'')+'/>';
+  const id='hatch-'+ax,hs=(vbW/48).toFixed(1);
+  let lost='',txt='';
+  for(let i=-n;i<=n;i++)for(let j=0;j<=nh;j++){
+    const x0=-u/2+i*u,x1=x0+u,y0=j?c.h+(j-1)*TH:0,y1=j?c.h+j*TH:c.h;
+    if(i===0&&j===0){lost+=R(x0,y0,x1,y1,'s-own');continue;}
+    lost+=R(x0,y0,x1,y1,'s-lost',' fill="url(#'+id+')"');
+    const fs=Math.min(vbW/20,(y1-y0)*0.42,u*0.42);
+    txt+='<text class="s-txt" x="'+((x0+x1)/2).toFixed(1)+'" y="'+(-(y0+y1)/2).toFixed(1)+'" font-size="'+fs.toFixed(1)+'" text-anchor="middle" dominant-baseline="central">DS</text>';
+  }
+  return '<svg viewBox="'+(-X1-pad).toFixed(1)+' '+(-Y1-pad).toFixed(1)+' '+vbW.toFixed(1)+' '+vbH.toFixed(1)+'" preserveAspectRatio="xMidYMid meet" role="img" aria-label="'+(ax==='w'?'정면':'측면')+' 슬롯 단면">'+
+    '<defs><pattern id="'+id+'" width="'+hs+'" height="'+hs+'" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'+
+    '<rect width="'+hs+'" height="'+hs+'" fill="rgba(248,81,73,.06)"/><line x1="0" y1="0" x2="0" y2="'+hs+'" stroke="rgba(248,81,73,.45)" stroke-width="'+(hs/5).toFixed(1)+'"/></pattern></defs>'+
+    lost+R(-cd/2,0,cd/2,c.h,'s-cont')+R(-gd/2,0,gd/2,d.h,'s-cargo')+
+    '<line class="s-gnd" x1="'+(-X1-pad)+'" y1="0" x2="'+(X1+pad)+'" y2="0"/>'+txt+'</svg>';
+}
+
+function renderDS(){
+  const r=state.res.find(x=>x.c.type===state.selected),ds=r.ds,c=r.c,n=ds.n;
+  $('ds-meta').textContent='표시 중: '+c.type+' · '+(is20(c)?"20'":"40'")+' 슬롯 기준';
+  const pr=(v,u)=>v>0?'+'+fmt(v)+u:'—';
+  const row=(label,p,base,cnt,where)=>'<tr><td>'+label+'</td><td class="'+(p>0?'up':'dimv')+'">'+p+'</td><td class="dimv">'+base+'</td>'+
+    '<td class="n '+(cnt?'up':'ok')+'">'+cnt+'</td><td class="dimv">'+(where||'')+'</td></tr>';
+  $('ds').innerHTML='<div class="dsgrid"><div class="dsleft">'+
+    '<div class="dstiles">'+
+      '<div class="tile occ"><span class="k">실제 점유 Space</span><span class="big">'+ds.occ+' 슬롯</span><span class="s">'+ds.occTeu+' TEU · '+c.type+' 장비 자리</span></div>'+
+      '<span class="op">+</span>'+
+      '<div class="tile dead'+(ds.dead?'':' zero')+'"><span class="k">Dead Space</span><span class="big">'+ds.dead+' 슬롯</span><span class="s">'+ds.deadTeu+' TEU · '+(ds.dead?'돌출로 사용 불가':'손실 없음')+'</span></div>'+
+      '<span class="op">=</span>'+
+      '<div class="tile tot"><span class="k">총 Space</span><span class="big">'+ds.total+' 슬롯</span><span class="s">'+ds.totalTeu+' TEU · 선적 시 소요</span></div>'+
+    '</div>'+
+    (r.status===2?'<div class="hint up">※ '+c.type+'은(는) 적재 불가 장비입니다 — 아래 수치는 참고치입니다.</div>':'')+
+    '<table class="dstab"><thead><tr><th>구분</th><th>돌출 (cm)</th><th>슬롯 기준 (cm)</th><th>Dead Space</th><th>위치</th></tr></thead><tbody>'+
+      row('길이 L · 전후',pr(ds.p.l,'/측'),(is20(c)?"20' ":"40' ")+fmt(ds.u.l),ds.ax.l,n.l?'앞 '+n.l+' · 뒤 '+n.l:'')+
+      row('폭 W · 좌우',pr(ds.p.w,'/측'),"8' "+fmt(SLOT.w),ds.ax.w,n.w?'좌 '+n.w+' · 우 '+n.w:'')+
+      row('높이 H · 상부',pr(ds.p.h,''),"8'6\" "+fmt(SLOT.h),ds.ax.h,n.h?'위 '+n.h+'단':'')+
+      row('복합 · 모서리','','L·W·H 겹침',ds.corner,ds.corner?'대각선 슬롯':'')+
+    '</tbody><tfoot>'+
+      '<tr><td>Dead Space 합계</td><td></td><td></td><td class="n '+(ds.dead?'up':'ok')+'">'+ds.dead+'</td><td>'+ds.deadTeu+' TEU</td></tr>'+
+      '<tr class="sub"><td>실제 점유 Space</td><td></td><td class="dimv">'+c.type+' 장비 슬롯</td><td class="n" style="color:var(--amber)">'+ds.occ+'</td><td>'+ds.occTeu+' TEU</td></tr>'+
+      '<tr class="sum"><td>총 Space</td><td></td><td class="dimv">점유 + Dead Space</td><td class="n">'+ds.total+'</td><td>'+ds.totalTeu+' TEU</td></tr>'+
+    '</tfoot></table>'+
+    '<div class="hint">돌출은 장비 외곽(폭 243.8 · 길이 '+fmt(extL(c))+') 기준입니다. 1cm라도 인접 슬롯에 걸리면 Dead Space로 계산하고(허용오차 없음), 화물이 직육면체이므로 모서리 슬롯도 포함합니다. 선사별 산정 기준은 다를 수 있습니다.</div>'+
+  '</div><div class="dsleft">'+
+    '<div class="secs">'+
+      '<figure class="sec"><figcaption>정면 · 폭 W × 높이 H</figcaption>'+section(r,'w')+'</figure>'+
+      '<figure class="sec"><figcaption>측면 · 길이 L × 높이 H</figcaption>'+section(r,'l')+'</figure>'+
+    '</div>'+
+    '<div class="dslegend"><span><i style="background:rgba(167,176,186,.3);border:1px solid #c9d1d9"></i>장비</span>'+
+      '<span><i style="background:var(--amber)"></i>화물</span>'+
+      '<span><i style="background:rgba(248,81,73,.2);border:1px dashed var(--red)"></i>Dead Space 슬롯</span>'+
+      '<span><i style="border:1px dashed var(--amber)"></i>실제 점유 슬롯</span></div>'+
+  '</div></div>';
 }
 
 /* ---------- 3D 적재 뷰 (Three.js, 1 unit = 1 m) ---------- */
@@ -595,8 +741,28 @@ function build(r){
   lab('W '+fmt(c.w),[L/2+0.5,-0.16,0],'dim');
   lab('H '+fmt(c.h),[-L/2,H/2,W/2+0.3],'dim');
 
-  // 카메라 거리: 컨테이너·화물 전체가 들어오도록
-  const sx=Math.max(L,l),sy=Math.max(H,h),sz=Math.max(W,w);
+  // Dead Space: 화물 때문에 쓸 수 없는 인접 슬롯 (빨간 점선 상자)
+  let sx=Math.max(L,l),sy=Math.max(H,h),sz=Math.max(W,w);
+  const ds=r.ds,showDS=state.showDS&&ds.dead>0;
+  if(showDS){
+    const uL=ds.u.l*S,uW=SLOT.w*S,TH=SLOT.h*S,eL=extL(c)*S,n=ds.n;
+    const gMat=new T.MeshBasicMaterial({color:0xf85149,transparent:true,opacity:.07,depthWrite:false,side:T.DoubleSide});
+    const eMat=new T.LineDashedMaterial({color:0xf85149,dashSize:.16,gapSize:.1,transparent:true,opacity:.6});
+    for(let i=-n.l;i<=n.l;i++)for(let k=-n.w;k<=n.w;k++)for(let j=0;j<=n.h;j++){
+      if(!i&&!k&&!j)continue;
+      const bx=(i?uL:eL)*.985,bz=uW*.985,y0=j?H+(j-1)*TH:0,y1=j?H+j*TH:H;
+      const x=i?Math.sign(i)*(eL/2+(Math.abs(i)-.5)*uL):0,z=k*uW,y=(y0+y1)/2;
+      const geo=new T.BoxGeometry(bx,(y1-y0)*.985,bz);
+      const m=new T.Mesh(geo,gMat);m.position.set(x,y,z);m.renderOrder=3;g.add(m);
+      const e=new T.LineSegments(new T.EdgesGeometry(geo),eMat);e.position.copy(m.position);e.computeLineDistances();g.add(e);
+      lab('DS',[x,y,z],'ds');
+    }
+    if(n.l)sx=Math.max(sx,eL+2*n.l*uL);
+    if(n.w)sz=Math.max(sz,(2*n.w+1)*uW);
+    if(n.h)sy=Math.max(sy,H+n.h*TH);
+  }
+
+  // 카메라 거리: 컨테이너·화물(·Dead Space) 전체가 들어오도록
   G.target.set(0,sy*0.4,0);
   const tan=Math.tan(G.camera.fov*Math.PI/360),aspect=G.w/G.h||1.6;
   G.fitDist=Math.max(Math.hypot(sx,sz)*1.0/(tan*aspect),Math.hypot(sy,sz)*1.15/tan,4);
@@ -633,23 +799,32 @@ function run(){
   if(inp.error)return;
   const {cargo,opt}=inp;
   state.res=ALL.map(c=>evaluate(cargo,c,KIND[c.kind].allow,opt));
+  state.res.forEach(r=>r.ds=deadSpace(r));
   const ranked=[...state.res].sort(rankCmp);
   state.rec=ranked.find(r=>r.status<2)||null;
   state.selected=(state.rec||ranked[0]).c.type;   // 입력이 바뀌면 추천 컨테이너로 돌아감
   last=cargo;
-  renderDev(cargo,opt);renderCards(cargo);renderRec(cargo);show3D();
+  renderDev(cargo,opt);renderCards(cargo);renderRec(cargo);renderDS();show3D();
 }
 function select(type){
   if(!last||!type)return;
   state.selected=type;
   document.querySelectorAll('.card').forEach(el=>el.classList.toggle('sel',el.dataset.type===type));
-  renderRec(last);show3D();
+  renderRec(last);renderDS();show3D();
 }
 $('form').addEventListener('submit',e=>{e.preventDefault();run();});
 $('form').addEventListener('input',run);
 $('cards').addEventListener('click',e=>{const el=e.target.closest('.card');if(el)select(el.dataset.type);});
 $('cards').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const el=e.target.closest('.card');if(el){e.preventDefault();select(el.dataset.type);}}});
-document.querySelector('.viewbtns').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setView(b.dataset.view);});
+document.querySelector('.viewbtns').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.view)setView(b.dataset.view);
+  else if(b.id==='dsbtn'){
+    state.showDS=!state.showDS;
+    b.classList.toggle('on',state.showDS);b.setAttribute('aria-pressed',String(state.showDS));
+    if(last)show3D();
+  }
+});
 run();
 </script>
 </body>
